@@ -1,0 +1,36 @@
+{% extends 'base.html' %}{% block title %}Private sales rehearsal{% endblock %}
+{% block body %}
+<section class="page-head"><div class="wrap"><span class="eyebrow">PRIVATE / DRY RUN ONLY</span><h1>Marketplace sales desk</h1><p>Test what the reply engine would draft. No Facebook connection, outgoing message, payment, or customer data storage.</p></div></section>
+<div class="wrap admin-content">
+<p><a class="text-link" href="/admin">← Back to operations</a> · <a class="text-link" href="/admin/research">Review Detroit leads</a></p>
+<div class="alert"><strong>Safe testing:</strong> Every draft here is for internal review only. Real Detroit properties are unverified research leads. The fictional scenario simulates an approved property so we can test the complete sales pitch, but its links cannot be used.</div>
+<div class="inbox-grid">
+<section class="form-card">
+<h2>Rehearse a customer conversation</h2>
+<form method="post" action="/admin/inbox/draft"><input type="hidden" name="csrf_token" value="{{ csrf }}">
+<label>Property / scenario
+<select name="lead_id">
+<option value="FICTIONAL" {% if selected_id == 'FICTIONAL' %}selected{% endif %}>Fictional verified rental — full sales-script demonstration</option>
+{% for lead in leads %}<option value="{{ lead.id }}" {% if selected_id == lead.id %}selected{% endif %}>{{ lead.address }} — ${'%.0f'|format(lead.rent_usd)} (unverified)</option>{% endfor %}
+</select></label>
+<label>Incoming customer message
+<textarea name="customer_message" rows="4" maxlength="1000" required placeholder="Example: Can I see the house before I apply?">{{ customer_message or '' }}</textarea></label>
+<button class="button primary" type="submit">Generate approved draft ↗</button>
+</form>
+<div class="hint">Quick prompts to try: “Is this available?” · “Can I see it first?” · “Are pets allowed?” · “What's the application fee?” · “I'm ready to apply” · “Can I apply directly?”</div>
+</section>
+<section class="form-card">
+<h2>Draft response</h2>
+{% if result %}
+<p class="hint"><strong>Detected intent:</strong> {{ result.intent.replace('_',' ').title() }} · <strong>Scenario:</strong> {{ result.mode.replace('_',' ').title() }}</p>
+<div class="draft-bubble" id="draft-text">{{ result.text }}</div>
+<p class="hint"><strong>External send:</strong> Disabled · <strong>Manual review:</strong> {% if result.requires_review %}Required{% else %}Sandbox testing only{% endif %}</p>
+<button class="button outline" type="button" id="copy-draft" data-copy-target="draft-text">Copy draft</button>
+{% elif error %}<div class="alert danger">{{ error }}</div>
+{% else %}<p>Enter an example customer question to see the actual rule-selected response. The original customer message will not be written to the database.</p>
+{% endif %}
+</section>
+</div>
+</div>
+<script defer src="/static/inbox_desk.js"></script>
+{% endblock %}

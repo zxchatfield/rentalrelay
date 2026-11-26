@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="RentalRelay — independently collect and forward applications for authorized Michigan rental listings.">
+<title>{% block title %}RentalRelay{% endblock %} · RentalRelay</title><link href="/static/styles.css" rel="stylesheet"></head>
+<body>
+{% if demo %}<div class="demo-banner"><strong>DEMO / TEST MODE</strong> — no real rental applications or payments are accepted. Example rentals are fictional.</div>{% endif %}
+<header class="topbar"><nav class="nav wrap" aria-label="Main navigation">
+<a class="logo" href="/"><span class="mark">⌂</span> Rental<span>Relay</span></a>
+<div class="navlinks"><a href="/rentals">Browse rentals</a><a href="/how-it-works">How it works</a><a href="/faq">FAQs</a><a href="/contact">Contact</a></div>
+<a class="nav-cta" href="/rentals">Explore homes <span aria-hidden="true">↗</span></a></nav></header>
+<main id="main">{% block body %}{% endblock %}</main>
+<footer class="footer"><div class="wrap footergrid"><section><div class="logo">⌂ Rental<span>Relay</span></div><p>Independent application intake and forwarding. We don't own, lease, screen, or approve the homes shown. Approval decisions belong to the property manager.</p></section><section><strong>Explore</strong><a href="/rentals">Available rentals</a><a href="/how-it-works">How it works</a><a href="/faq">Frequently asked questions</a></section><section><strong>Information</strong><a href="/terms">Service terms</a><a href="/privacy">Privacy</a><a href="/refund-policy">Refunds</a><a href="/admin/login">Operator</a></section></div><div class="wrap legal">© {{ year }} RentalRelay · Equal Housing Opportunity · Independently operated service</div></footer>
+</body></html>

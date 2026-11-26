@@ -1,0 +1,1 @@
+**Start with `../00_MUSE_OPEN_AND_EXECUTE.txt`.** This package does not contain authorized property photographs or Meta credentials. The user said Stripe is connected **to Muse**, not necessarily to the app. Source URLs and price facts may age. Run all code and verify real provider actions before declaring autonomous operation.

@@ -1,0 +1,93 @@
+{
+  "version": "2026-11-25-conversion-v2",
+  "integration_status": "UNVERIFIED; this package does not connect to Meta Messenger",
+  "stages": [
+    "new_inquiry",
+    "timing_asked",
+    "fact_answered",
+    "application_offered",
+    "link_requested",
+    "link_sent",
+    "application_started",
+    "paid_verified",
+    "submitted_received",
+    "needs_review",
+    "opted_out"
+  ],
+  "routing": [
+    {
+      "message": "is available",
+      "intent": "availability",
+      "if_payment_ready": "timing_asked",
+      "reply": "home facts + one verified selling point + ask timing"
+    },
+    {
+      "message": "gives move in timing",
+      "intent": "move_in_timing",
+      "if_payment_ready": "application_offered",
+      "reply": "accurate date + convenience + $24.99 + ask if link wanted"
+    },
+    {
+      "message": "interested",
+      "intent": "interested",
+      "if_payment_ready": "application_offered",
+      "reply": "online application convenience + $24.99 + permission for link"
+    },
+    {
+      "message": "ready/apply/link",
+      "intent": "apply_request",
+      "if_payment_ready": "link_sent",
+      "reply": "secure URL + $24.99 + known other fees + independent status/recipient disclosed at prepayment checkout"
+    },
+    {
+      "message": "rent and fees upfront",
+      "intent": "availability_and_fee",
+      "reply": "respond directly with costs, no forced small talk"
+    },
+    {
+      "message": "tour",
+      "intent": "tour",
+      "reply": "only property-specific verified showing policy"
+    },
+    {
+      "message": "property question",
+      "intent": "property_fact",
+      "reply": "accurate record data then one natural CTA"
+    },
+    {
+      "message": "skeptical or fee objection",
+      "intent": "hesitant_about_fee",
+      "reply": "explain actual paid service, no pressure"
+    },
+    {
+      "message": "owner/manager or direct link asked",
+      "intent": "who_are_you or direct_application",
+      "reply": "truthful names and verified contact"
+    },
+    {
+      "message": "stop",
+      "intent": "stop",
+      "next": "opted_out",
+      "reply": "acknowledge; no follow-ups"
+    }
+  ],
+  "sending_rules": [
+    "dedupe using platform message ID",
+    "one reply to one inquiry not multiple",
+    "do not send if policy or identity/availability/payment readiness missing",
+    "never claim auto-send until a live authorized test confirms",
+    "no automated unsolicited follow ups",
+    "no unverified application-before-tour requirement"
+  ],
+  "conversion_measurements": [
+    "incoming",
+    "replied",
+    "links_requested",
+    "links_sent",
+    "visits",
+    "application_starts",
+    "stripe_verified_payments",
+    "verified_deliveries",
+    "refunds"
+  ]
+}

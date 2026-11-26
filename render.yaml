@@ -1,0 +1,31 @@
+# RentalRelay — Render Free web service (zero-cost deploy).
+# Deploy with `render.yaml` (Blueprint) or by creating the service in the
+# Render dashboard and pointing it at this repo. Secrets are NEVER stored
+# here: every sync: false variable must be set in the Render dashboard.
+# OPERATING_LIVE stays false and TEST_MODE stays true until a confirmed
+# application-delivery arrangement exists; live payments stay off.
+services:
+  - type: web
+    name: rentalrelay
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /healthz
+    envVars:
+      - key: OPERATING_LIVE
+        value: "false"
+      - key: TEST_MODE
+        value: "true"
+      - key: TURSO_DATABASE_URL
+        sync: false
+      - key: TURSO_AUTH_TOKEN
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false

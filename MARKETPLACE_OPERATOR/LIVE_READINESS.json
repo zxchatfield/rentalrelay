@@ -1,0 +1,17 @@
+{
+  "project": {},
+  "properties": {
+    "DT-001": {
+      "source": "https://dethomesmanagement.managebuilding.com/Resident/public/rentals/121531"
+    },
+    "DT-002": {
+      "source": "https://clararobinsonpa.managebuilding.com/Resident/public/rentals/197727"
+    },
+    "DT-003": {
+      "source": "https://showmojo.com/l/a2bd77706c/19610-westphalia-st-detroit-mi-48205?g=2&sd=true"
+    },
+    "DT-004": {
+      "source": "https://showmojo.com/l/f9f4a2b02c/72-w-philadelphia-st-lowr-philly_w_72l-detroit-mi-48202"
+    }
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "v": 1,
+  "progress": [
+    {
+      "name": "facebook_marketplace_rental_category",
+      "status": "NOT_VERIFIED",
+      "evidence": [],
+      "blocker": ""
+    },
+    {
+      "name": "authorized_and_current_detroit_inventory",
+      "status": "NOT_VERIFIED",
+      "evidence": [],
+      "blocker": ""
+    },
+    {
+      "name": "authorized_property_images",
+      "status": "NOT_VERIFIED",
+      "evidence": [],
+      "blocker": ""
+    },
+    {
+      "name": "actual_published_marketplace_listing",
+      "status": "NOT_VERIFIED",
+      "evidence": [],
+      "blocker": ""
+    },
+    {
+      "name": "live_Messenger_inquiry_read_permission",
+      "status": "NOT_VERIFIED",
+      "evidence": [],
+      "blocker": ""
+    },
+    {
+      "name": "automatic_reply_write_permission_and_latency",
+      "status": "NOT_VERIFIED",
+      "evidence": [],
+      "blocker": ""
+    },
+    {
+      "name": "live_application_web_https",
+      "status": "NOT_VERIFIED",
+      "evidence": [],
+      "blocker": ""
+    },
+    {
+      "name": "Stripe_webhook_signature_and_checkout",
+      "status": "NOT_VERIFIED",
+      "evidence": [],
+      "blocker": ""
+    },
+    {
+      "name": "valid_application_fulfillment_delivery",
+      "status": "NOT_VERIFIED",
+      "evidence": [],
+      "blocker": ""
+    },
+    {
+      "name": "Telegram_real_paid_notice",
+      "status": "NOT_VERIFIED",
+      "evidence": [],
+      "blocker": ""
+    },
+    {
+      "name": "daily_report_eastern_time",
+      "status": "NOT_VERIFIED",
+      "evidence": [],
+      "blocker": ""
+    }
+  ],
+  "note": "No actual Meta or Stripe connectors were exercised in the packaged-code environment. Muse must fill these fields from its own successful actions."
+}

@@ -1,0 +1,28 @@
+# RentalRelay on Fly.io (free tier). App name may be taken — adjust at launch.
+# Deploy needs a Fly.io account + `fly auth` (Zac's account; his step).
+app = "rentalrelay"
+primary_region = "ord"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  # Keep 1 machine up once live: the delivery-worker heartbeat requires the app
+  # to be running. On the free allowance this may cost — re-verify the free
+  # tier at deploy time; min_machines_running = 0 keeps it free but sleeps.
+  min_machines_running = 0
+  processes = ["app"]
+
+[[mounts]]
+  source = "rentalrelay_data"
+  destination = "/data"
+
+[env]
+  OPERATING_LIVE = "false"
+  DATABASE_PATH = "/data/rentalrelay.sqlite3"
+  SESSION_HTTPS = "true"
+  PUBLIC_BASE_URL = "https://rentalrelay.fly.dev"

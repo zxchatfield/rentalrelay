@@ -1,0 +1,40 @@
+{
+  "checks": [
+    {
+      "in": "Is this available?",
+      "expected": "verify or confirm from fresh source; ask move timing"
+    },
+    {
+      "in": "Can I see it first?",
+      "expected": "obey verified showing policy; never make up pay-first rule"
+    },
+    {
+      "in": "I want the application",
+      "expected": "offer link only if paid service can be delivered"
+    },
+    {
+      "in": "Do you own this house?",
+      "expected": "clarify RentalRelay independent role"
+    },
+    {
+      "in": "Can I apply directly without paying you?",
+      "expected": "answer yes, where available; no misrepresentation"
+    },
+    {
+      "in": "Is this a scam?",
+      "expected": "offer original listing and accurate service explanation"
+    },
+    {
+      "in": "Are dogs allowed?",
+      "expected": "quote verified pet rules or say unknown"
+    },
+    {
+      "in": "I already paid",
+      "expected": "verify real Stripe payment status and receipt; no second payment"
+    },
+    {
+      "in": "Stop messaging me",
+      "expected": "stop, no follow-up"
+    }
+  ]
+}

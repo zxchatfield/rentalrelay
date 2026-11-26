@@ -1,0 +1,118 @@
+{
+  "status": "RESEARCH_ONLY_ALL_PROPERTIES_HELD",
+  "as_of": "2026-11-25",
+  "outreach_allowed": false,
+  "publish_allowed": false,
+  "live_payment_allowed": false,
+  "auto_reply_allowed": false,
+  "requires_user_authorization_for_any_external_contact": true,
+  "evidence_requirements": [
+    {
+      "field": "current_availability",
+      "must_have": "current original-source confirmation, verify again close to posting"
+    },
+    {
+      "field": "rent_and_material_terms",
+      "must_have": "no contradictory price, deposit, move-in dates, fees or amenities"
+    },
+    {
+      "field": "commercial_image_license",
+      "must_have": "permission covering actual image assets and Facebook/Marketplace usage or original owned image"
+    },
+    {
+      "field": "advertisement_authorization",
+      "must_have": "lawful permitted listing workflow; no implication of owner/agent authority"
+    },
+    {
+      "field": "application_path",
+      "must_have": "actual valid process, with verifiable receipt, via accepting recipient or applicant authorized assistance"
+    },
+    {
+      "field": "service_fees",
+      "must_have": "all known additional screening/application fees and who gets each fee"
+    },
+    {
+      "field": "showing_policy",
+      "must_have": "documented property-specific facts; no fake pre-tour application requirement"
+    },
+    {
+      "field": "meta_permission",
+      "must_have": "verified permitted account, listing and messaging capabilities"
+    },
+    {
+      "field": "stripe_delivery",
+      "must_have": "real checkout, verified webhook, refund flow, and application receipt audit"
+    }
+  ],
+  "profiles": [
+    {
+      "id": "DT-001",
+      "advertise": false,
+      "copy_images": false,
+      "charge_applicant": false,
+      "why": "Photo rights, advertising authority, paid-application receipt path and current availability not established"
+    },
+    {
+      "id": "DT-002",
+      "advertise": false,
+      "copy_images": false,
+      "charge_applicant": false,
+      "why": "Photo rights, advertising authority, paid-application receipt path and current availability not established"
+    },
+    {
+      "id": "DT-003",
+      "advertise": false,
+      "copy_images": false,
+      "charge_applicant": false,
+      "why": "Photo rights, advertising authority, paid-application receipt path and current availability not established"
+    },
+    {
+      "id": "DT-004",
+      "advertise": false,
+      "copy_images": false,
+      "charge_applicant": false,
+      "why": "Photo rights, advertising authority, paid-application receipt path and current availability not established"
+    },
+    {
+      "id": "DT-005",
+      "advertise": false,
+      "copy_images": false,
+      "charge_applicant": false,
+      "why": "Photo rights, advertising authority, paid-application receipt path and current availability not established"
+    },
+    {
+      "id": "DT-006",
+      "advertise": false,
+      "copy_images": false,
+      "charge_applicant": false,
+      "why": "Photo rights, advertising authority, paid-application receipt path and current availability not established"
+    },
+    {
+      "id": "DT-007",
+      "advertise": false,
+      "copy_images": false,
+      "charge_applicant": false,
+      "why": "Photo rights, advertising authority, paid-application receipt path and current availability not established"
+    },
+    {
+      "id": "DT-008",
+      "advertise": false,
+      "copy_images": false,
+      "charge_applicant": false,
+      "why": "Photo rights, advertising authority, paid-application receipt path and current availability not established"
+    }
+  ],
+  "blanket_manager_written_signature_required": false,
+  "research_testing_and_internal_implementation_allowed": true,
+  "reason_publish_hold": "No verified rights to original listing photos, no established right to hold ourselves out as rental advertiser, and no confirmed real application fulfillment path. No signed-manager-paperwork universal rule is asserted.",
+  "fulfillment_paths": [
+    {
+      "id": "renter_authorized_assistance",
+      "needs": "renter consent, accurate description of assistance, official application route, evidence of work performed; do not falsely mark accepted or submitted"
+    },
+    {
+      "id": "integrated_receiving_party_delivery",
+      "needs": "verifiable receiving-party agreement/channel and confirmed submission receipt; document evidence, which need not be assumed to be a signed letter"
+    }
+  ]
+}

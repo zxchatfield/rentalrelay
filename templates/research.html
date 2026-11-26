@@ -1,0 +1,16 @@
+{% extends 'base.html' %}{% block title %}Detroit lead review{% endblock %}
+{% block body %}
+<section class="page-head"><div class="wrap"><span class="eyebrow">PRIVATE OPERATOR WORKSPACE</span><h1>Detroit rental leads</h1><p>8 researched candidates · not verified for public advertising or paid submissions</p></div></section>
+<div class="wrap admin-content"><p><a class="text-link" href="/admin">← Back to operations</a></p>
+<div class="alert"><strong>Research only.</strong> These listing prices can change. Photo galleries are for review, not permission to copy photos. No lead on this page is an active RentalRelay listing. Review status does not activate any public listing or payment.</div>
+<div class="research-grid">
+{% for lead in leads %}<article class="form-card research-card"><div class="research-top"><div><span class="eyebrow">#{{ lead.priority }} · {{ lead.id }}</span><h2>{{ lead.address }}</h2><p>{{ lead.city }}, Michigan</p></div><div class="research-price">${{ '{:,.0f}'.format(lead.rent_usd) }}<small>/mo advertised</small></div></div>
+<div class="specs">{{ lead.beds }} beds <span>·</span> {{ lead.baths }} baths <span>·</span> {{ lead.sqft }} sqft <span>·</span> {{ lead.photo_count }} linked photos</div>
+<p class="research-hook"><strong>Potential hook:</strong> {{ lead.selling_point }}</p>
+<div class="research-links"><a class="button outline" href="{{ lead.source_url }}" target="_blank" rel="noopener noreferrer">Original listing ↗</a><a class="button outline" href="{{ lead.photo_gallery_url }}" target="_blank" rel="noopener noreferrer">View photo gallery ↗</a></div>
+<p class="hint"><strong>Last observed:</strong> {{ lead.last_seen }} · <strong>Advertised price:</strong> {{ lead.price_status.replace('_',' ').lower() }}</p>
+<h3>Facts to verify</h3><ul class="checklist caution-list">{% for x in lead.issues %}<li>{{ x }}</li>{% endfor %}</ul>
+<p class="hint"><strong>Application route:</strong> {{ lead.application_method }}</p>
+<p class="hint"><strong>Photo rights:</strong> {{ lead.photo_rights_status }} · <strong>Third-party acceptance:</strong> {{ lead.application_acceptance_status }}</p>
+<form method="post" action="/admin/research/{{ lead.id }}/status"><input type="hidden" name="csrf_token" value="{{ csrf }}"><label>Internal review stage <select name="review_status">{% for stage in statuses %}<option value="{{ stage }}" {% if lead.review_status == stage %}selected{% endif %}>{{ stage.replace('_',' ').title() }}</option>{% endfor %}</select></label><label>Research notes (private)<textarea name="operator_notes" maxlength="1500" rows="2">{{ lead.operator_notes }}</textarea></label><button class="button primary" type="submit">Save research status</button></form></article>{% endfor %}
+</div></div>{% endblock %}
