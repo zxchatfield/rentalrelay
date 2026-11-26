@@ -56,6 +56,30 @@ def test_assist_page_renders_in_demo(monkeypatch, tmp_path):
     assert 'Get application help' in detail.text or 'Preview application help' in detail.text
 
 
+def test_assist_page_shows_property_facts_and_verifiable_manager(monkeypatch, tmp_path):
+    """Simplified funnel: the direct application link must show accurate
+    property details, the transparent service fee, and verifiable manager
+    info (including the official listing link) before the form."""
+    app = _reload_app(monkeypatch, tmp_path, 'assist-facts.sqlite3')
+    client = TestClient(app.app)
+    res = client.get('/assist/DEMO-ONLY')
+    assert res.status_code == 200
+    assert 'Example location' in res.text
+    assert '2 bedrooms' in res.text
+    assert '1 bathrooms' in res.text
+    assert '900 sqft' in res.text
+    assert '$1,450' in res.text  # rent and deposit
+    assert 'Our application service fee' in res.text
+    assert '$24.99' in res.text
+    assert 'Fictional Manager' in res.text
+    assert 'demo@example.invalid' in res.text
+    assert 'View official listing' in res.text
+    assert 'https://example.invalid' in res.text
+    # No listing-site framing in the nav.
+    assert 'Browse rentals' not in res.text
+    assert 'Explore homes' not in res.text
+
+
 def test_assist_post_blocked_in_demo(monkeypatch, tmp_path):
     app = _reload_app(monkeypatch, tmp_path, 'assist-demo.sqlite3')
     client = TestClient(app.app)

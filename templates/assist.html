@@ -1,5 +1,15 @@
 {% extends 'base.html' %}{% block title %}Application assistance for {{ p.title }}{% endblock %}{% block body %}<section class="page-head"><div class="wrap"><span class="eyebrow">APPLICATION ASSISTANCE</span><h1>Application assistance for {{ p.title }}</h1><p>We help you prepare your application and guide you through the manager's own official application process. Our optional service is {{ price }}.</p></div></section>
 <div class="form-container"><div class="steps"><span class="step active">1 · Your details</span><span class="step">2 · Your consent</span><span class="step">3 · Secure checkout</span></div>
+<section class="form-card"><span class="eyebrow">{{ p.city|upper }}</span><h2>{{ p.title }}</h2><p class="address">{{ p.address }}, {{ p.city }}</p><div class="specs large">{{ p.beds|int }} bedrooms <span>·</span> {{ p.baths|int }} bathrooms {% if p.sqft %}<span>·</span> {{ p.sqft }} sqft{% endif %}</div><div class="divider"></div>
+<div class="row-between"><span>Monthly rent</span><strong>${{ "{:,.0f}".format(p.rent_cents / 100) }}</strong></div>
+<div class="row-between"><span>Deposit</span><strong>${{ "{:,.0f}".format(p.deposit_cents / 100) }}</strong></div>
+<div class="row-between"><span>Pets</span><strong>{{ p.pets or 'Confirm directly with management' }}</strong></div>
+<div class="row-between"><span>Our application service fee</span><strong>{{ price }}</strong></div>
+<div class="divider"></div>
+<div class="row-between"><span>Property manager</span><strong>{{ p.manager_name }}</strong></div>
+<div class="row-between"><span>Manager email</span><strong><a href="mailto:{{ p.manager_email }}">{{ p.manager_email }}</a></strong></div>
+<div class="row-between"><span>Manager fee</span><strong>{{ p.manager_fee }}</strong></div>
+{% if p.source_url %}<p class="hint">Verify this rental on the manager's official listing: <a href="{{ p.source_url }}" target="_blank" rel="noopener noreferrer">View official listing ↗</a></p>{% endif %}</section>
 {% if not can_assist %}<div class="alert"><strong>Preview only.</strong> Real applications and payments are currently disabled. Do not enter personal information. {% if p.is_demo %}This is a fictional property.{% endif %}</div>{% endif %}
 <div class="alert"><strong>What this is — and is not.</strong> We prepare your application packet and show you exactly how to submit it through <strong>{{ p.manager_name }}</strong>'s official route. You submit the finished packet yourself. This does not file the application for you, does not guarantee the manager will accept it, and is not proof it was submitted.</div>
 {% if errors %}<div class="alert danger"><strong>Please correct these:</strong><ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}

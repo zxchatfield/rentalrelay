@@ -1,7 +1,7 @@
 {% extends 'base.html' %}{% block title %}{{ p.title }}{% endblock %}{% block body %}<div class="wrap"><div class="breadcrumbs"><a href="/rentals">Rental listings</a> / {{ p.city }}</div>
 {% if p.is_demo %}<div class="alert">FICTIONAL DEMONSTRATION. This property does not exist and cannot be rented. No payment or application is accepted.</div>{% endif %}
 <div class="detail-grid"><section><div class="big-art"><div class="house"><div class="roof"></div><div class="body-house"><div class="win"></div><div class="door"></div><div class="win right"></div></div></div></div>
-<span class="eyebrow">{{ p.city|upper }}</span><h1 class="detail-title">{{ p.title }}</h1><p class="address">{{ p.address }}</p><div class="specs large">{{ p.beds }} bedrooms <span>·</span> {{ p.baths }} bathrooms {% if p.sqft %}<span>·</span> {{ p.sqft }} sqft{% endif %}</div>
+<span class="eyebrow">{{ p.city|upper }}</span><h1 class="detail-title">{{ p.title }}</h1><p class="address">{{ p.address }}</p><div class="specs large">{{ p.beds|int }} bedrooms <span>·</span> {{ p.baths|int }} bathrooms {% if p.sqft %}<span>·</span> {{ p.sqft }} sqft{% endif %}</div>
 <h2>About this rental</h2><p>{{ p.details }}</p><h3>Pets</h3><p>{{ p.pets or 'Confirm directly with management' }}</p><h3>Property manager</h3><p>{{ p.manager_name }}</p><p>Separate manager application fees: <strong>{{ p.manager_fee }}</strong>.</p>
 {% if p.tour_url and not p.is_demo %}<a href="{{ p.tour_url }}" class="text-link" rel="noopener noreferrer" target="_blank">Request a viewing with management ↗</a>{% endif %}
 <p class="hint">RentalRelay is not the property manager and cannot promise approval or arrange a lease.</p></section>
