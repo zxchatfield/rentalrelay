@@ -54,7 +54,10 @@ class Config:
 def connect_state(path):
     path.parent.mkdir(parents=True, exist_ok=True)
     con = database.connect(str(path), timeout=20)
-    con.execute('PRAGMA busy_timeout=20000')
+    # busy_timeout is a local-file lock wait; Turso is a remote database
+    # and rejects it, so only set it for a local sqlite3 file.
+    if not database.is_remote():
+        con.execute('PRAGMA busy_timeout=20000')
     con.execute('CREATE TABLE IF NOT EXISTS message_log(event_key TEXT PRIMARY KEY, sent_at TEXT NOT NULL)')
     con.commit()
     return con

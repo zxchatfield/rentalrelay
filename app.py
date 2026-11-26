@@ -74,7 +74,10 @@ def db():
 
 def init_db():
     with db() as conn:
-        conn.execute('PRAGMA journal_mode=WAL')
+        # WAL is a local-file journaling mode; Turso is a remote database
+        # and rejects it, so only enable it for a local sqlite3 file.
+        if not database.is_remote():
+            conn.execute('PRAGMA journal_mode=WAL')
         conn.executescript('''
         CREATE TABLE IF NOT EXISTS properties (
             id TEXT PRIMARY KEY, title TEXT NOT NULL, city TEXT NOT NULL, address TEXT NOT NULL,

@@ -147,3 +147,58 @@ def test_local_uri_read_only(tmp_path):
     ro = database.connect(uri, uri=True, timeout=5)
     assert ro.execute('SELECT name FROM t').fetchone()[0] == 'x'
     ro.close()
+
+
+def test_init_db_skips_wal_pragma_when_remote(monkeypatch, tmp_path):
+    """Regression: Turso rejects PRAGMA journal_mode=WAL (a local-file
+    journaling mode), which crashed the Render deploy at startup when
+    init_db ran it against the remote database. init_db must skip it
+    when the connection is remote."""
+    import importlib
+
+    executed = []
+
+    class FakeCursor:
+        def __init__(self):
+            self.description = []
+
+        def execute(self, sql, params=()):
+            executed.append(sql)
+            if 'journal_mode' in sql:
+                raise ValueError('not supported')
+            return self
+
+        def fetchone(self):
+            return None
+
+        def fetchall(self):
+            return []
+
+    class FakeConn:
+        def execute(self, sql, params=()):
+            executed.append(sql)
+            if 'journal_mode' in sql:
+                raise ValueError('not supported')
+            return FakeCursor()
+
+        def commit(self):
+            return None
+
+        def rollback(self):
+            return None
+
+        def close(self):
+            return None
+
+    monkeypatch.setenv('TURSO_DATABASE_URL', 'libsql://example.turso.io')
+    monkeypatch.setenv('TURSO_AUTH_TOKEN', 'test-token')
+    monkeypatch.setenv('DATABASE_PATH', str(tmp_path / 'test.sqlite3'))
+    monkeypatch.setenv('OPERATING_LIVE', 'false')
+    monkeypatch.setattr(libsql, 'connect',
+                        lambda url, auth_token=None, timeout=20: FakeConn())
+    import app
+    importlib.reload(app)
+    # init_db ran at import; it must not have executed the WAL pragma.
+    assert not any('journal_mode' in s for s in executed)
+    # The schema statements still ran against the remote connection.
+    assert any('CREATE TABLE IF NOT EXISTS properties' in s for s in executed)
