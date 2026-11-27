@@ -709,6 +709,60 @@ def verify_property(request:Request,property_id:str,csrf_token:str=Form(''),adve
                  int(flags['secure_delivery_verified']),utc() if flags['public_active'] else p['verified_at'],int(flags['public_active']),property_id))
     return RedirectResponse('/admin',status_code=303)
 
+@app.post('/admin/properties/{property_id}/edit')
+def edit_property(request:Request,property_id:str,csrf_token:str=Form(''),
+                  title:str=Form(''),city:str=Form(''),address:str=Form(''),
+                  rent_dollars:str=Form(''),deposit_dollars:str=Form(''),
+                  beds:str=Form(''),baths:str=Form(''),details:str=Form(''),pets:str=Form(''),
+                  manager_name:str=Form(''),manager_email:str=Form(''),manager_fee:str=Form(''),
+                  source_url:str=Form(''),tour_url:str=Form('')):
+    # Correct a property's facts after it was added (e.g. a confirmed manager fee).
+    # Empty fields are left unchanged, so a small fee-only form cannot wipe other facts.
+    # Editing facts does not touch the permission flags or verified_at.
+    require_admin(request);check_csrf(request,csrf_token)
+    p=one('SELECT * FROM properties WHERE id=? AND is_demo=0',(property_id,))
+    if not p:raise HTTPException(404,'Property not found')
+    updates={}
+    if title.strip(): updates['title']=title.strip()[:150]
+    if city.strip(): updates['city']=city.strip()[:80]
+    if address.strip(): updates['address']=address.strip()[:150]
+    if rent_dollars.strip():
+        try: rent=int(rent_dollars.strip())
+        except ValueError: raise HTTPException(400,'Invalid rent')
+        if rent<1: raise HTTPException(400,'Invalid rent')
+        updates['rent_cents']=rent*100
+    if deposit_dollars.strip():
+        try: dep=int(deposit_dollars.strip())
+        except ValueError: raise HTTPException(400,'Invalid deposit')
+        if dep<0: raise HTTPException(400,'Invalid deposit')
+        updates['deposit_cents']=dep*100
+    if beds.strip():
+        try: updates['beds']=float(beds.strip())
+        except ValueError: raise HTTPException(400,'Invalid bedrooms')
+    if baths.strip():
+        try: updates['baths']=float(baths.strip())
+        except ValueError: raise HTTPException(400,'Invalid bathrooms')
+    if details.strip(): updates['details']=details.strip()[:3000]
+    if pets.strip(): updates['pets']=pets.strip()[:200]
+    if manager_name.strip(): updates['manager_name']=manager_name.strip()[:120]
+    if manager_email.strip():
+        if not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$',manager_email.strip()): raise HTTPException(400,'Invalid manager email')
+        updates['manager_email']=manager_email.strip()[:255]
+    if manager_fee.strip(): updates['manager_fee']=manager_fee.strip()[:120]
+    if source_url.strip():
+        if urlparse(source_url.strip()).scheme not in ('https','http') or not urlparse(source_url.strip()).netloc:
+            raise HTTPException(400,'Source and tour URLs must be http(s)')
+        updates['source_url']=source_url.strip()[:1000]
+    if tour_url.strip():
+        if urlparse(tour_url.strip()).scheme not in ('https','http') or not urlparse(tour_url.strip()).netloc:
+            raise HTTPException(400,'Source and tour URLs must be http(s)')
+        updates['tour_url']=tour_url.strip()[:1000]
+    if not updates: return RedirectResponse('/admin',status_code=303)
+    with db() as conn:
+        conn.execute('UPDATE properties SET '+','.join(f'{k}=?' for k in updates)+' WHERE id=?',
+                     tuple(updates[k] for k in updates)+(property_id,))
+    return RedirectResponse('/admin',status_code=303)
+
 @app.post('/admin/applications/{app_id}/delivered')
 def mark_delivered(request:Request,app_id:str,csrf_token:str=Form(''),receipt_id:str=Form('')):
     require_admin(request);check_csrf(request,csrf_token)

@@ -124,6 +124,54 @@ def test_admin_property_creation_and_publishing_guard(monkeypatch,tmp_path):
     assert client.get('/rentals/'+p['id']).status_code==404
 
 
+def test_admin_property_edit_updates_manager_fee(monkeypatch,tmp_path):
+    import re
+    monkeypatch.setenv('DATABASE_PATH',str(tmp_path/'edit.sqlite3'))
+    monkeypatch.setenv('SESSION_SECRET','x'*48)
+    monkeypatch.setenv('ADMIN_USERNAME','owner')
+    monkeypatch.setenv('ADMIN_PASSWORD_HASH',password.encode_password('really-long-admin-pass'))
+    monkeypatch.setenv('OPERATING_LIVE','false')
+    import app
+    importlib.reload(app)
+    client=TestClient(app.app)
+    def csrf(url):
+        page=client.get(url)
+        return re.search(r'name="csrf_token" value="([^"]+)"',page.text).group(1)
+    token=csrf('/admin/login')
+    r=client.post('/admin/login',data={'username':'owner','password':'really-long-admin-pass','csrf_token':token},follow_redirects=True)
+    assert r.status_code==200 and 'RentalRelay operations' in r.text
+    token=csrf('/admin')
+    new={'csrf_token':token,'title':'456 Edit St','city':'Detroit','address':'456 Edit St, Detroit, MI',
+         'rent_dollars':'850','deposit_dollars':'1275','beds':'2','baths':'1',
+         'manager_name':'Clara Robinson PA','manager_email':'jose@clararobinsonpa.com','manager_fee':'Ask manager',
+         'source_url':'https://example.org/listing'}
+    assert client.post('/admin/properties',data=new,follow_redirects=False).status_code==303
+    with app.db() as conn:
+        p=conn.execute('SELECT * FROM properties WHERE title=?',('456 Edit St',)).fetchone()
+        assert p and p['manager_fee']=='Ask manager'
+    # A confirmed fee replaces the placeholder; nothing else changes.
+    assert client.post(f'/admin/properties/{p["id"]}/edit',
+                       data={'csrf_token':token,'manager_fee':'$50 per adult, non-refundable'},
+                       follow_redirects=False).status_code==303
+    with app.db() as conn:
+        p=conn.execute('SELECT * FROM properties WHERE id=?',(p['id'],)).fetchone()
+        assert p['manager_fee']=='$50 per adult, non-refundable'
+        assert p['rent_cents']==85000 and p['manager_name']=='Clara Robinson PA'
+    # Bad email is rejected and the fee is untouched.
+    assert client.post(f'/admin/properties/{p["id"]}/edit',
+                       data={'csrf_token':token,'manager_email':'not-an-email'},
+                       follow_redirects=False).status_code==400
+    with app.db() as conn:
+        p=conn.execute('SELECT * FROM properties WHERE id=?',(p['id'],)).fetchone()
+        assert p['manager_fee']=='$50 per adult, non-refundable'
+    # An empty edit changes nothing, and demo properties cannot be edited.
+    assert client.post(f'/admin/properties/{p["id"]}/edit',
+                       data={'csrf_token':token},follow_redirects=False).status_code==303
+    assert client.post('/admin/properties/DEMO-ONLY/edit',
+                       data={'csrf_token':token,'manager_fee':'$1'},
+                       follow_redirects=False).status_code==404
+
+
 def test_paid_status_only_after_signed_webhook(monkeypatch,tmp_path):
     monkeypatch.setenv('DATABASE_PATH',str(tmp_path/'webhook.sqlite3'))
     monkeypatch.setenv('STRIPE_WEBHOOK_SECRET','whsec_test_key')
