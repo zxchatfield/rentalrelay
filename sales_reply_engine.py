@@ -38,7 +38,7 @@ def _manager_fee(f):
     value = f.get('manager_additional_fee_usd')
     if value is None: return None
     timing = f.get('manager_fee_timing') or 'at the disclosed stage of the process'
-    if float(value) == 0: return 'No separate application fee has been confirmed for this property.'
+    if float(value) == 0: return 'There is no separate application fee for this property.'
     return f"There is also a separate ${float(value):.2f} application fee {timing}."
 
 def _verified_highlight(f: dict[str, Any]) -> str:

@@ -157,6 +157,13 @@ def test_admin_property_edit_updates_manager_fee(monkeypatch,tmp_path):
         p=conn.execute('SELECT * FROM properties WHERE id=?',(p['id'],)).fetchone()
         assert p['manager_fee']=='$50 per adult, non-refundable'
         assert p['rent_cents']==85000 and p['manager_name']=='Clara Robinson PA'
+    # Square footage can be set the same way; an unconfirmed sqft stays unset.
+    assert client.post(f'/admin/properties/{p["id"]}/edit',
+                       data={'csrf_token':token,'sqft':'750'},
+                       follow_redirects=False).status_code==303
+    with app.db() as conn:
+        p=conn.execute('SELECT * FROM properties WHERE id=?',(p['id'],)).fetchone()
+        assert p['sqft']==750
     # Bad email is rejected and the fee is untouched.
     assert client.post(f'/admin/properties/{p["id"]}/edit',
                        data={'csrf_token':token,'manager_email':'not-an-email'},

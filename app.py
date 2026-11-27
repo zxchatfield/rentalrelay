@@ -713,7 +713,7 @@ def verify_property(request:Request,property_id:str,csrf_token:str=Form(''),adve
 def edit_property(request:Request,property_id:str,csrf_token:str=Form(''),
                   title:str=Form(''),city:str=Form(''),address:str=Form(''),
                   rent_dollars:str=Form(''),deposit_dollars:str=Form(''),
-                  beds:str=Form(''),baths:str=Form(''),details:str=Form(''),pets:str=Form(''),
+                  beds:str=Form(''),baths:str=Form(''),sqft:str=Form(''),details:str=Form(''),pets:str=Form(''),
                   manager_name:str=Form(''),manager_email:str=Form(''),manager_fee:str=Form(''),
                   source_url:str=Form(''),tour_url:str=Form('')):
     # Correct a property's facts after it was added (e.g. a confirmed manager fee).
@@ -742,6 +742,10 @@ def edit_property(request:Request,property_id:str,csrf_token:str=Form(''),
     if baths.strip():
         try: updates['baths']=float(baths.strip())
         except ValueError: raise HTTPException(400,'Invalid bathrooms')
+    if sqft.strip():
+        try: updates['sqft']=int(sqft.strip())
+        except ValueError: raise HTTPException(400,'Invalid square footage')
+        if updates['sqft']<0: raise HTTPException(400,'Invalid square footage')
     if details.strip(): updates['details']=details.strip()[:3000]
     if pets.strip(): updates['pets']=pets.strip()[:200]
     if manager_name.strip(): updates['manager_name']=manager_name.strip()[:120]
