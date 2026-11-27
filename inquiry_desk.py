@@ -16,7 +16,7 @@ PATTERNS = [
     ('who_are_you', r'\b(who are you|are you the owner|do you own|are you the landlord|who manages)\b', None),
     ('payment_method', r'\b(credit card|debit card|how do i pay|payment method|cash app|cashapp|venmo|zelle)\b', None),
     ('fees', r'\b(application fee|application cost|how much to apply|fee to apply|why.*fee|cost to apply|\$24[.,]99)\b', None),
-    ('tour', r'\b(see it|see the (house|home|property)|see .*first|tour|view it|viewing|showing|walk.?through|come look|see inside)\b', None),
+    ('tour', r'\b(see it|see the (house|home|property|place)|see .*first|tour|view it|viewing|showing|walk.?through|come look|see inside)\b', None),
     ('property_fact', r'\b(pets?|dogs?|cats?)\b', 'pet_policy'),
     ('property_fact', r'\b(deposit|security deposit|move.?in cost)\b', 'deposit_usd'),
     ('property_fact', r'\b(utilities|electric|water bill|gas bill)\b', 'utilities'),

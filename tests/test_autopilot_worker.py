@@ -13,7 +13,10 @@ def test_paid_notice_not_lease_or_delivery():
     apps=[{'id':'A','status':'delivery_pending','paid_at':when.isoformat(),'delivered_at':None,'refunded_at':None}]
     msgs=prepare_messages(apps,[],when,daily_hour=8)
     assert [k for k,_ in msgs]==['paid:A']
-    assert 'NOT a completed lease' in msgs[0][1]
+    assert msgs[0][1] == '💰 New payment: $24.99\n📍 Property not recorded\n\nToday: $24.99\nThis month: $24.99'
+    assert 'lease' not in msgs[0][1].lower()
+    assert 'delivered' not in msgs[0][1].lower()
+    assert 'A' not in msgs[0][1].split('\n')[0]
 
 def test_daily_report_dedup_and_no_pii(tmp_path,monkeypatch):
     monkeypatch.setenv("OPERATING_LIVE","true")
@@ -35,10 +38,10 @@ def test_daily_report_dedup_and_no_pii(tmp_path,monkeypatch):
     assert run_once(cfg, mock, when)==[]
     assert len(logs)==3
     assert any('Gross charges: $24.99' in s for s in logs)
-    assert any('Property: 123 Test St, Detroit' in s for s in logs)
-    assert any('Revenue today: $24.99' in s for s in logs)
-    assert any('Revenue this month: $24.99' in s for s in logs)
-    assert any('Delivery status: awaiting manager delivery' in s for s in logs)
+    assert any('📍 123 Test St, Detroit' in s for s in logs)
+    assert any('Today: $24.99' in s for s in logs)
+    assert any('This month: $24.99' in s for s in logs)
+    assert all('Delivery status' not in s for s in logs)
     assert all('full name' not in s.lower() for s in logs)
 
 def test_alert_after_two_hours():
@@ -81,7 +84,7 @@ def test_test_notifications_send_labeled_test_message(tmp_path,monkeypatch):
     sent=run_once(cfg, mock, when)
     assert 'paid:app123' in sent
     assert any(s.startswith('🧪 TEST PAYMENT') for s in logs)
-    assert any('Do not count it as revenue' in s for s in logs)
+    assert any(s.startswith('🧪 TEST PAYMENT\n💰 New payment: $24.99') for s in logs)
     assert run_once(cfg, mock, when)==[]
 
 

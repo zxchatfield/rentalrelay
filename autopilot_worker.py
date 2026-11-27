@@ -103,13 +103,18 @@ def prepare_messages(apps, props, now=None, daily_hour=8, escalate_minutes=120, 
     now = now or now_utc()
     local = now.astimezone(ET)
     prop_map = {p['id']: p for p in props}
-    test_prefix = '🧪 TEST PAYMENT — ' if test_mode else ''
     test_digest_prefix = '🧪 TEST — ' if test_mode else ''
-    test_note = '\nThis is a TEST payment. Do not count it as revenue.' if test_mode else ''
     def revenue_for(day=None, month=None):
         total = 0
         for x in apps:
             if x['status'] == 'refunded':
+                continue
+            # Keep test payments out of real revenue totals (and vice versa).
+            # A Stripe Checkout Session id positively identifies the kind.
+            sid = x.get('stripe_session_id') or ''
+            if test_mode and sid.startswith('cs_live_'):
+                continue
+            if not test_mode and sid.startswith('cs_test_'):
                 continue
             t = parse_time(x['paid_at'])
             if not t:
@@ -128,19 +133,19 @@ def prepare_messages(apps, props, now=None, daily_hour=8, escalate_minutes=120, 
         # Stripe webhook is the only path to paid_at, never form completion or redirect.
         appid=a['id']
         prop = prop_map.get(a.get('property_id') or '')
-        prop_label = f"{prop['address']}, {prop['city']}" if prop else 'Property not recorded'
+        if prop:
+            addr = prop['address']
+            city = prop['city']
+            prop_label = addr if city and city.lower() in addr.lower() else f"{addr}, {city}"
+        else:
+            prop_label = 'Property not recorded'
         paid_day = paid_at.astimezone(ET).date()
         day_total = revenue_for(day=paid_day)
         month_total = revenue_for(month=(paid_day.year, paid_day.month))
-        if a['status'] == 'delivered':
-            delivery_label = 'delivered'
-        elif a['status'] == 'refunded':
-            delivery_label = 'refunded — no delivery'
-        elif a['status'] == 'packet_ready':
-            delivery_label = 'packet ready for renter (assistance path — renter submits it)'
-        else:
-            delivery_label = 'awaiting manager delivery'
-        msgs.append((f'paid:{appid}', f'{test_prefix}💵 RentalRelay — payment verified: $24.99\nProperty: {prop_label}\nApplication ID: {appid}\nPayment status: paid\nApplication status: {a["status"]}\nDelivery status: {delivery_label}\nRevenue today: {money(day_total)}\nRevenue this month: {money(month_total)}\nThis is NOT a completed lease or confirmed property-manager delivery.{test_note}'))
+        # Routine payment notification: short and human. Application IDs,
+        # technical statuses and disclaimers stay in the internal records.
+        test_label = '🧪 TEST PAYMENT\n' if test_mode else ''
+        msgs.append((f'paid:{appid}', f'{test_label}💰 New payment: $24.99\n📍 {prop_label}\n\nToday: {money(day_total)}\nThis month: {money(month_total)}'))
         if a['status']=='delivered' and a['delivered_at']:
             msgs.append((f'delivered:{appid}', f'✅ Application marked delivered\nApplication ID: {appid}\nCheck the manager receipt/audit before describing it as confirmed.'))
         if a['status']=='refunded' and a['refunded_at']:

@@ -137,7 +137,8 @@ def render(intent: str, f: dict[str, Any], now: datetime | None = None, fact: st
                 return out(f"For {home}, an application is required before a showing can be scheduled. You can complete yours online through RentalRelay for $24.99. {fee} Would you like the secure application link?")
             return out(f"For {home}, an application is required before a showing can be scheduled. I’m verifying the application setup, so I can’t accept payment just yet.", review=True)
         if policy == 'tour_before_application_allowed' and f.get('manager_approved_tour_instructions'):
-            text = (f"Yes, you can request a viewing first. The confirmed process is: {f['manager_approved_tour_instructions']}. "
+            instructions = f['manager_approved_tour_instructions'].strip().rstrip('.')
+            text = (f"Yes, you can request a viewing first. The confirmed process is: {instructions}. "
                     + ("If you’d rather start the application now, you can apply through RentalRelay for $24.99. Would you like the application link?" if ready
                        else "I can also explain our application process when the details are confirmed."))
             return out(text)

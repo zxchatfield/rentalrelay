@@ -6,6 +6,8 @@ import os
 import re
 import secrets
 import sqlite3
+import threading
+import time
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
@@ -23,6 +25,7 @@ from password import verify_password
 from stripe_client import checkout_session, refund, verify_stripe_signature, StripeError
 from manager_api_delivery import safe_endpoint
 from research_leads import seed_research_leads, REVIEW_STATUSES
+from autopilot_worker import prepare_messages, send_telegram
 
 ROOT = Path(__file__).resolve().parent
 load_dotenv(ROOT/'.env')
@@ -104,6 +107,12 @@ def init_db():
             FOREIGN KEY(property_id) REFERENCES properties(id)
         );
         CREATE TABLE IF NOT EXISTS stripe_events (id TEXT PRIMARY KEY, received_at TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS telegram_notifications (
+            id TEXT PRIMARY KEY, application_id TEXT NOT NULL, kind TEXT NOT NULL DEFAULT 'payment',
+            status TEXT NOT NULL DEFAULT 'pending', attempts INTEGER NOT NULL DEFAULT 0,
+            last_error TEXT, created_at TEXT NOT NULL, sent_at TEXT,
+            UNIQUE(application_id, kind)
+        );
         CREATE TABLE IF NOT EXISTS delivery_worker_health (
             id INTEGER PRIMARY KEY CHECK(id=1), checked_at TEXT NOT NULL
         );
@@ -375,6 +384,98 @@ def apply_post(request:Request,property_id:str,csrf_token:str=Form(''),full_name
         with db() as conn:conn.execute('UPDATE applications SET status=? WHERE id=?',('failed',app_id))
         return render(request,'notice.html',heading='Payment unavailable',message='No charge was taken. Please try again later or contact us.',code=503)
 
+# Telegram payment notifications, integrated into the web service (no second
+# service). When Stripe confirms a payment the webhook persists the payment
+# AND queues a Telegram notification in the same database transaction. The
+# webhook tries to send it immediately; the watchdog thread below retries
+# anything still pending, so a failed send or a restart never loses it.
+TELEGRAM_MAX_ATTEMPTS = 60
+TELEGRAM_WATCHDOG_SECONDS = 60
+_NOTIFY_LOCK = threading.Lock()
+
+def _telegram_config():
+    return os.getenv('TELEGRAM_BOT_TOKEN', '').strip(), os.getenv('TELEGRAM_CHAT_ID', '').strip()
+
+def _payment_notification_message(application_id):
+    """Build the Telegram payment message for one application via the shared
+    worker formatter. Returns None when the application has no verified payment."""
+    with db() as conn:
+        a = conn.execute('SELECT * FROM applications WHERE id=?', (application_id,)).fetchone()
+        if not a or not a['paid_at']:
+            return None
+        apps = [dict(r) for r in conn.execute('SELECT * FROM applications').fetchall()]
+        props = [dict(r) for r in conn.execute('SELECT * FROM properties').fetchall()]
+    msgs = prepare_messages(apps, props, now=dt.datetime.now(dt.timezone.utc), daily_digest=False, test_mode=DEMO)
+    for key, body in msgs:
+        if key == f'paid:{application_id}':
+            return body
+    return None
+
+def attempt_payment_notification(application_id):
+    """Send the queued Telegram payment notification for one application.
+    Returns True when the message is (now) sent. Safe to call repeatedly:
+    an already-sent notification is skipped, and a failed send stays queued
+    for the watchdog. Serialized so the webhook and the watchdog can never
+    send the same notification twice."""
+    with _NOTIFY_LOCK:
+        with db() as conn:
+            row = conn.execute(
+                "SELECT * FROM telegram_notifications WHERE application_id=? AND kind='payment'",
+                (application_id,)).fetchone()
+            if not row:
+                return False
+            if row['status'] == 'sent':
+                return True
+            row_id = row['id']
+        message = _payment_notification_message(application_id)
+        if not message:
+            with db() as conn:
+                conn.execute("UPDATE telegram_notifications SET attempts=attempts+1, last_error=? WHERE id=?",
+                             ('no verified payment message', row_id))
+            return False
+        token, chat_id = _telegram_config()
+        try:
+            send_telegram(token, chat_id, message)
+        except Exception as exc:  # noqa: BLE001 - record and retry, never crash the webhook
+            logging.getLogger(__name__).warning('Telegram payment notification failed for %s: %s', application_id, exc)
+            with db() as conn:
+                conn.execute("UPDATE telegram_notifications SET attempts=attempts+1, last_error=? WHERE id=?",
+                             (str(exc)[:500], row_id))
+                cur = conn.execute("SELECT attempts FROM telegram_notifications WHERE id=?", (row_id,)).fetchone()
+                if cur and cur['attempts'] >= TELEGRAM_MAX_ATTEMPTS:
+                    conn.execute("UPDATE telegram_notifications SET status='failed' WHERE id=?", (row_id,))
+            return False
+        with db() as conn:
+            conn.execute("UPDATE telegram_notifications SET status='sent', sent_at=?, attempts=attempts+1 WHERE id=?",
+                         (utc(), row_id))
+        return True
+
+def _retry_pending_notifications():
+    with db() as conn:
+        rows = conn.execute(
+            "SELECT application_id FROM telegram_notifications WHERE status='pending' AND attempts < ? ORDER BY created_at",
+            (TELEGRAM_MAX_ATTEMPTS,)).fetchall()
+    for r in rows:
+        try:
+            attempt_payment_notification(r['application_id'])
+        except Exception:  # noqa: BLE001 - watchdog must keep running
+            logging.getLogger(__name__).exception('Telegram notification retry failed for %s', r['application_id'])
+
+def _notification_watchdog_loop():
+    # Poll immediately on startup so a restart picks up pending notifications
+    # right away, then every minute.
+    while True:
+        try:
+            _retry_pending_notifications()
+        except Exception:  # noqa: BLE001 - watchdog must keep running
+            logging.getLogger(__name__).exception('Telegram notification watchdog error')
+        time.sleep(TELEGRAM_WATCHDOG_SECONDS)
+
+@app.on_event('startup')
+def _start_notification_watchdog():
+    thread = threading.Thread(target=_notification_watchdog_loop, daemon=True, name='telegram-notification-watchdog')
+    thread.start()
+
 @app.post('/stripe/webhook')
 async def stripe_webhook(request:Request):
     try:
@@ -382,6 +483,7 @@ async def stripe_webhook(request:Request):
     except StripeError:
         raise HTTPException(400,'Invalid signature')
     eid=event['id']; obj=event.get('data',{}).get('object',{})
+    notify_app_id=None
     with db() as conn:
         if conn.execute('SELECT 1 FROM stripe_events WHERE id=?',(eid,)).fetchone():return {'ok':True,'duplicate':True}
         if event.get('type')=='checkout.session.completed':
@@ -394,14 +496,24 @@ async def stripe_webhook(request:Request):
             # with the manager, so it never becomes 'delivered' and never
             # triggers the worker's undelivered-manager-delivery escalation.
             new_status='packet_ready' if a['service_type']=='assistance' else 'delivery_pending'
-            conn.execute('UPDATE applications SET status=?, stripe_payment_intent=?, paid_at=? WHERE id=? AND status=?',
+            cur=conn.execute('UPDATE applications SET status=?, stripe_payment_intent=?, paid_at=? WHERE id=? AND status=?',
                     (new_status,obj.get('payment_intent'),utc(),app_id,'payment_pending'))
+            if cur.rowcount:
+                # Persist the Telegram notification in the same transaction as
+                # the payment, so a confirmed payment is never lost. The send
+                # is attempted right after this commit; the watchdog retries
+                # anything still pending.
+                conn.execute("INSERT OR IGNORE INTO telegram_notifications(id, application_id, kind, status, attempts, created_at) VALUES (?,?,?,?,0,?)",
+                             (f'payment:{app_id}', app_id, 'payment', 'pending', utc()))
+                notify_app_id=app_id
         elif event.get('type')=='charge.refunded':
             pi=obj.get('payment_intent')
             if pi:
                 conn.execute('UPDATE applications SET status=?,refunded_at=? WHERE stripe_payment_intent=? AND status!=?',
                              ('refunded',utc(),pi,'refunded'))
         conn.execute('INSERT INTO stripe_events(id,received_at) VALUES (?,?)',(eid,utc()))
+    if notify_app_id:
+        attempt_payment_notification(notify_app_id)
     return {'ok':True}
 
 @app.get('/checkout/success')
